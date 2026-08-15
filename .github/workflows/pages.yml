@@ -1,4 +1,4 @@
-name: Corrigir navegação
+name: Adicionar login e QR
 
 on:
   push:
@@ -9,13 +9,13 @@ permissions:
   contents: write
 
 jobs:
-  corrigir:
-    if: ${{ !contains(github.event.head_commit.message, '[navegacao-ok]') }}
+  atualizar:
+    if: ${{ !contains(github.event.head_commit.message, '[login-qr-ok]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Remover eventos duplicados do teclado
+      - name: Inserir login e QR
         shell: python {0}
         run: |
           from pathlib import Path
@@ -23,43 +23,104 @@ jobs:
 
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
+          marker = '<!-- login-qr-pages-v1 -->'
+          if marker in s:
+              raise SystemExit(0)
 
-          # Remove a correção adicional que criou um segundo controlador.
-          s = re.sub(
-              r'\s*<!-- keyboard-pages-final -->\s*<script>.*?</script>',
-              '', s, count=1, flags=re.S
-          )
+          css = r'''
+          <style>
+          #accessGate{position:fixed;inset:0;z-index:2147483647;background:#f8fbf7;color:#153b30;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif;display:grid;grid-template-columns:minmax(300px,.88fr) minmax(360px,1.12fr);overflow:auto}
+          #accessGate *{box-sizing:border-box}
+          #accessGate .gate-story{min-height:100dvh;padding:clamp(32px,6vw,88px);background:#153b30;color:#f8fbf7;display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
+          #accessGate .gate-story:after{content:"";position:absolute;width:520px;height:520px;border-radius:50%;right:-190px;bottom:-230px;background:#c7e36b}
+          #accessGate .gate-mark,#accessGate .gate-story h1,#accessGate .gate-story p,#accessGate .gate-qr{position:relative;z-index:1}
+          #accessGate .gate-mark{font-size:13px;letter-spacing:.14em;text-transform:uppercase;font-weight:850;color:#c7e36b}
+          #accessGate .gate-story h1{font-size:clamp(44px,5vw,88px);line-height:.92;letter-spacing:-.06em;max-width:8ch;margin:0}
+          #accessGate .gate-story p{max-width:38ch;font-size:16px;line-height:1.55;color:#dce9df;margin:0}
+          #accessGate .gate-qr{position:absolute;right:28px;top:28px;width:132px;padding:9px;border-radius:14px;background:#f8fbf7;color:#153b30;text-align:center}
+          #accessGate .gate-qr img{display:block;width:100%;height:auto}
+          #accessGate .gate-qr span{display:block;margin-top:5px;font-size:11px;font-weight:850}
+          #accessGate .gate-panel{min-height:100dvh;display:grid;place-items:center;padding:clamp(24px,6vw,92px)}
+          #accessForm{width:min(430px,100%)}
+          #accessForm .kicker{font-size:12px;letter-spacing:.13em;text-transform:uppercase;font-weight:850;color:#4a9e57}
+          #accessForm h2{font-size:clamp(34px,4vw,61px);line-height:1;letter-spacing:-.05em;margin:14px 0 16px}
+          #accessForm .copy{font-size:16px;line-height:1.5;color:#61776f;margin:0 0 32px}
+          #accessForm .field{display:grid;gap:8px;margin-top:18px}
+          #accessForm label{font-size:14px;font-weight:780}
+          #accessForm .input-wrap{position:relative}
+          #accessForm input{width:100%;min-height:54px;border:1px solid #cad8d2;border-radius:12px;background:#fff;padding:0 15px;color:#153b30;font:650 16px/1 system-ui;outline:none}
+          #accessForm input:focus{border-color:#78aa35;box-shadow:0 0 0 3px rgba(120,170,53,.18)}
+          #accessToggle{position:absolute;right:7px;top:7px;height:40px;border:0;border-radius:9px;background:#eef5e8;color:#153b30;padding:0 12px;font-weight:780;cursor:pointer}
+          #accessSubmit{width:100%;min-height:56px;margin-top:24px;border:0;border-radius:12px;background:#78aa35;color:#fff;font-weight:880;font-size:16px;cursor:pointer}
+          #accessError{min-height:24px;margin-top:12px;font-size:14px;font-weight:750;color:#a63b3b}
+          body.access-locked{overflow:hidden!important}
+          @media(max-width:760px){#accessGate{grid-template-columns:1fr}#accessGate .gate-story{min-height:220px;padding:28px 24px}#accessGate .gate-story h1{font-size:45px;max-width:none}#accessGate .gate-story p{display:none}#accessGate .gate-panel{min-height:auto;padding:28px 22px 40px;align-items:start}#accessGate .gate-qr{width:94px;right:18px;top:18px;padding:6px}#accessGate .gate-qr span{font-size:9px}}
+          </style>
+          '''
 
-          # O controlador portátil registrava a mesma função em window e
-          # document. Um único toque era processado duas vezes, pulando pares.
-          s = s.replace(
-              "window.addEventListener('keydown',handle,true);document.addEventListener('keydown',handle,true);",
-              "window.addEventListener('keydown',handle,true);"
-          )
-          s = s.replace(
-              "window.addEventListener('keydown', handler, true);\n            document.addEventListener('keydown', handler, true);",
-              "window.addEventListener('keydown', handler, true);"
-          )
+          gate = r'''
+          <!-- login-qr-pages-v1 -->
+          <div id="accessGate">
+            <section class="gate-story">
+              <div class="gate-mark">Setor Madeiras · Londrina</div>
+              <h1>Decisão com evidência.</h1>
+              <p>Apresentação executiva protegida, disponível no Windows, iPhone e Android.</p>
+              <div class="gate-qr">
+                <img alt="QR code para abrir no celular" src="https://api.qrserver.com/v1/create-qr-code/?size=520x520&ecc=H&data=https%3A%2F%2Findominho.github.io%2FSetor-Madeiras%2F">
+                <span>Abrir no celular</span>
+              </div>
+            </section>
+            <section class="gate-panel">
+              <form id="accessForm" autocomplete="on">
+                <div class="kicker">Acesso restrito</div>
+                <h2>Entrar na apresentação</h2>
+                <p class="copy">Use as credenciais autorizadas para abrir o conteúdo.</p>
+                <div class="field"><label for="accessUser">Usuário</label><div class="input-wrap"><input id="accessUser" inputmode="numeric" autocomplete="username" required autofocus></div></div>
+                <div class="field"><label for="accessPass">Senha</label><div class="input-wrap"><input id="accessPass" type="password" autocomplete="current-password" required><button id="accessToggle" type="button">Mostrar</button></div></div>
+                <button id="accessSubmit" type="submit">Acessar apresentação</button>
+                <div id="accessError" role="alert" aria-live="polite"></div>
+              </form>
+            </section>
+          </div>
+          '''
 
-          if '[navegacao-unica]' not in s:
-              s = s.replace('</body>', '<!-- [navegacao-unica] -->\n</body>')
+          js = r'''
+          <script>
+          (() => {
+            const gate=document.getElementById('accessGate');
+            const form=document.getElementById('accessForm');
+            const user=document.getElementById('accessUser');
+            const pass=document.getElementById('accessPass');
+            const toggle=document.getElementById('accessToggle');
+            const error=document.getElementById('accessError');
+            document.body.classList.add('access-locked');
+            toggle.addEventListener('click',()=>{const show=pass.type==='password';pass.type=show?'text':'password';toggle.textContent=show?'Ocultar':'Mostrar';pass.focus()});
+            form.addEventListener('submit',event=>{event.preventDefault();event.stopPropagation();if(user.value.trim()==='51067271'&&pass.value==='madeiras2026'){gate.remove();document.body.classList.remove('access-locked');document.body.tabIndex=-1;document.body.focus({preventScroll:true})}else{error.textContent='Usuário ou senha incorretos.';pass.focus();pass.select()}},true);
+          })();
+          </script>
+          '''
 
+          s = s.replace('</head>', css + '\n</head>')
+          s = s.replace('<body', gate + '\n<body', 1)
+          s = s.replace('</body>', js + '\n</body>')
           p.write_text(s, encoding='utf-8')
 
-      - name: Validar controlador único
+      - name: Validar
         shell: python {0}
         run: |
           from pathlib import Path
-          s = Path('index.html').read_text(encoding='utf-8')
-          assert 'keyboard-pages-final' not in s
-          assert "window.addEventListener('keydown',handle,true);document.addEventListener('keydown',handle,true);" not in s
+          s=Path('index.html').read_text(encoding='utf-8')
+          assert 'login-qr-pages-v1' in s
+          assert 'accessGate' in s and 'accessForm' in s
+          assert '51067271' in s and 'madeiras2026' in s
+          assert 'api.qrserver.com' in s
+          assert 'indominho.github.io%2FSetor-Madeiras' in s
           assert s.count("window.addEventListener('keydown',handle,true)") == 1
-          assert '[navegacao-unica]' in s
 
       - name: Salvar
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git diff --cached --quiet || git commit -m "Corrige avanço duplo do teclado [navegacao-ok]"
+          git diff --cached --quiet || git commit -m "Adiciona login e QR [login-qr-ok]"
           git push
