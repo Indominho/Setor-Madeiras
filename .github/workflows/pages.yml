@@ -1,0 +1,95 @@
+name: Publicar GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Baixar repositório
+        uses: actions/checkout@v4
+
+      - name: Corrigir teclado e foco
+        shell: python
+        run: |
+          from pathlib import Path
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
+          marker = '<!-- keyboard-pages-v1 -->'
+          if marker not in s:
+              patch = r'''
+          <!-- keyboard-pages-v1 -->
+          <script>
+          (() => {
+            'use strict';
+            const total = 15;
+            let current = 1;
+            const read = () => {
+              const m = (location.hash || '').match(/(?:frame|slide)-(\d+)/);
+              current = m ? Math.max(1, Math.min(total, Number(m[1]) || 1)) : 1;
+            };
+            const go = n => {
+              current = Math.max(1, Math.min(total, n));
+              const frame = document.getElementById(`frame-${current}`);
+              const slide = document.getElementById(`slide-${current}`);
+              location.hash = frame ? `frame-${current}` : `slide-${current}`;
+              (frame || slide)?.focus?.({preventScroll:true});
+            };
+            const handler = event => {
+              const tag = event.target?.tagName || '';
+              if (/INPUT|TEXTAREA|SELECT/.test(tag)) return;
+              const key = event.key;
+              const code = event.keyCode || event.which || 0;
+              if (['ArrowRight','ArrowDown',' ','PageDown'].includes(key) || [39,40,32,34].includes(code)) {
+                event.preventDefault(); event.stopImmediatePropagation(); read(); go(current + 1);
+              } else if (['ArrowLeft','ArrowUp','PageUp'].includes(key) || [37,38,33].includes(code)) {
+                event.preventDefault(); event.stopImmediatePropagation(); read(); go(current - 1);
+              } else if (key === 'Home' || key === 'r' || key === 'R' || code === 36) {
+                event.preventDefault(); go(1);
+              } else if (key === 'End' || code === 35) {
+                event.preventDefault(); go(total);
+              } else if (key === 'f' || key === 'F' || code === 70) {
+                event.preventDefault();
+                if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+                else document.exitFullscreen?.();
+              }
+            };
+            window.addEventListener('keydown', handler, true);
+            document.addEventListener('keydown', handler, true);
+            window.addEventListener('hashchange', read);
+            window.addEventListener('load', () => { read(); document.body.tabIndex = -1; document.body.focus({preventScroll:true}); });
+            read();
+          })();
+          </script>
+          '''
+              s = s.replace('</body>', patch + '\n</body>')
+              p.write_text(s, encoding='utf-8')
+
+      - name: Configurar Pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+
+      - name: Enviar site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+
+      - name: Publicar
+        id: deployment
+        uses: actions/deploy-pages@v4
