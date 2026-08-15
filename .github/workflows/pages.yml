@@ -1,4 +1,4 @@
-name: Corrigir login e QR
+name: Reparar apresentação publicada
 
 on:
   push:
@@ -9,102 +9,142 @@ permissions:
   contents: write
 
 jobs:
-  corrigir:
-    if: ${{ !contains(github.event.head_commit.message, '[login-posicao-ok]') }}
+  reparar:
+    if: ${{ !contains(github.event.head_commit.message, '[reparo-final-ok]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Reposicionar login e QR
+      - name: Inserir controlador único e login funcional
         shell: python {0}
         run: |
           from pathlib import Path
           import re
 
-          p=Path('index.html')
-          s=p.read_text(encoding='utf-8')
+          p = Path('index.html')
+          s = p.read_text(encoding='utf-8')
 
-          # O bloco foi inserido na primeira ocorrência textual de "<body",
-          # que estava dentro de um comentário CSS. Remove o bloco quebrado.
-          s=re.sub(
-            r'\s*<!-- login-qr-pages-v1 -->\s*<div id="accessGate">.*?</div>\s*(?=<body data-nav="bottom \| top-right \| hidden">)',
-            '',s,count=1,flags=re.S
-          )
+          # Remove qualquer reparo final anterior para permitir reexecução segura.
+          s = re.sub(r'\s*<!-- reparo-final-inicio -->.*?<!-- reparo-final-fim -->\s*', '\n', s, flags=re.S)
 
-          # Remove script antigo do login para evitar duplicação.
-          s=re.sub(
-            r'\s*<script>\s*\(\(\) => \{\s*const gate=document\.getElementById\(\'accessGate\'\);.*?</script>',
-            '',s,count=1,flags=re.S
-          )
-
-          gate=r'''
-          <!-- login-qr-pages-v2 -->
-          <div id="accessGate">
-            <section class="gate-story">
-              <div class="gate-mark">Setor Madeiras · Londrina</div>
+          block = r'''
+          <!-- reparo-final-inicio -->
+          <style id="finalRepairStyles">
+          html,body{margin:0!important;width:100%!important;height:100%!important;overflow:hidden!important;background:oklch(28% .055 164)!important;overscroll-behavior:none!important}
+          body,body *{cursor:auto!important}
+          button,a,[role="button"]{cursor:pointer!important}
+          .chassis-cursor,.nav-dots,.keyboard-hint,.chassis-credit,.design-ui-credit,.css-arrow,.css-count,.deck-arrow,.deck-hint,.deck-count,.keyboard-ready{display:none!important}
+          .slide-viewport,.slide-viewport:first-of-type,.slide-viewport:target{position:fixed!important;inset:0!important;width:100vw!important;height:100vh!important;height:100dvh!important;display:none!important;overflow:hidden!important;scroll-snap-align:none!important;z-index:1!important;background:oklch(28% .055 164)!important}
+          .slide-viewport.final-active{display:block!important}
+          .slide-scale{position:absolute!important;left:50%!important;top:50%!important;width:1920px!important;height:1080px!important;transform:translate(-50%,-50%) scale(var(--final-scale,1))!important;transform-origin:center center!important}
+          .slide{width:1920px!important;height:1080px!important}
+          #finalGate{position:fixed;inset:0;z-index:2147483647;display:grid;grid-template-columns:minmax(320px,.92fr) minmax(380px,1.08fr);overflow:auto;background:oklch(98% .008 145);color:oklch(28% .055 164);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,sans-serif}
+          #finalGate *{box-sizing:border-box}
+          .final-story{min-height:100dvh;padding:clamp(32px,6vw,88px);background:oklch(28% .055 164);color:oklch(98% .008 145);display:flex;flex-direction:column;justify-content:space-between;position:relative;overflow:hidden}
+          .final-story:after{content:"";position:absolute;width:520px;height:520px;border-radius:50%;right:-190px;bottom:-230px;background:oklch(86% .16 118)}
+          .final-mark,.final-story h1,.final-story p,.final-qr{position:relative;z-index:1}
+          .final-mark{font-size:13px;letter-spacing:.14em;text-transform:uppercase;font-weight:850;color:oklch(86% .16 118)}
+          .final-story h1{font-size:clamp(44px,5vw,88px);line-height:.92;letter-spacing:-.06em;max-width:8ch;margin:0;text-wrap:balance}
+          .final-story p{max-width:38ch;font-size:16px;line-height:1.55;color:oklch(89% .018 155);margin:0}
+          .final-qr{position:absolute;right:28px;top:28px;width:132px;padding:9px;border-radius:14px;background:oklch(98% .008 145);color:oklch(28% .055 164);text-align:center}
+          .final-qr img{display:block;width:100%;height:auto;max-height:none}
+          .final-qr span{display:block;margin-top:5px;font-size:11px;font-weight:850}
+          .final-panel{min-height:100dvh;display:grid;place-items:center;padding:clamp(24px,6vw,92px)}
+          #finalForm{width:min(430px,100%)}
+          #finalForm .kicker{font-size:12px;letter-spacing:.13em;text-transform:uppercase;font-weight:850;color:oklch(61% .13 139)}
+          #finalForm h2{font-size:clamp(34px,4vw,61px);line-height:1;letter-spacing:-.05em;margin:14px 0 16px;text-wrap:balance}
+          #finalForm .copy{font-size:16px;line-height:1.5;color:oklch(49% .025 160);margin:0 0 32px}
+          #finalForm .field{display:grid;gap:8px;margin-top:18px}
+          #finalForm label{font-size:14px;font-weight:780}
+          #finalForm .input-wrap{position:relative}
+          #finalForm input{width:100%;height:56px;border:1px solid oklch(84% .02 155);border-radius:12px;background:oklch(99% .004 145);padding:0 15px;color:oklch(28% .055 164);font:650 16px/1 system-ui;outline:none;cursor:text!important}
+          #finalForm input:focus-visible{border-color:oklch(67% .145 127);box-shadow:0 0 0 3px oklch(67% .145 127/.22)}
+          #finalPass{padding-right:58px!important}
+          #finalToggle{position:absolute;right:7px;top:7px;width:42px;height:42px;border:0;border-radius:9px;background:oklch(94% .025 140);color:oklch(28% .055 164);display:grid;place-items:center;font-size:20px;line-height:1}
+          #finalSubmit{width:100%;height:56px;margin-top:24px;border:0;border-radius:12px;background:oklch(67% .145 127);color:oklch(99% .004 145);font-weight:880;font-size:16px}
+          #finalSubmit:active{transform:translateY(1px)}
+          #finalError{min-height:24px;margin-top:12px;font-size:14px;font-weight:750;color:oklch(48% .17 27)}
+          #finalNav{position:fixed;inset:0;z-index:2147483000;pointer-events:none;display:none}
+          body.final-unlocked #finalNav{display:block}
+          .final-arrow{position:absolute;top:50%;transform:translateY(-50%);width:52px;height:52px;border:1px solid oklch(98% .008 145/.38);border-radius:50%;background:oklch(28% .055 164);color:oklch(98% .008 145);font:800 26px/1 system-ui;pointer-events:auto;box-shadow:0 4px 16px oklch(15% .03 164/.18)}
+          #finalPrev{left:max(8px,env(safe-area-inset-left))}#finalNext{right:max(8px,env(safe-area-inset-right))}
+          .final-arrow:disabled{opacity:.25}
+          #finalCount{position:absolute;right:max(10px,env(safe-area-inset-right));bottom:max(10px,env(safe-area-inset-bottom));padding:7px 10px;border-radius:999px;background:oklch(28% .055 164);color:oklch(98% .008 145);font:750 12px/1 system-ui}
+          .draw{cursor:crosshair!important}
+          @media(max-width:760px){#finalGate{grid-template-columns:1fr}.final-story{min-height:210px;padding:26px 22px}.final-story h1{font-size:42px;max-width:none}.final-story p{display:none}.final-panel{min-height:auto;padding:28px 22px 40px;align-items:start}.final-qr{width:92px;right:16px;top:16px;padding:6px}.final-qr span{font-size:9px}.final-arrow{width:44px;height:44px;font-size:22px}#finalCount{font-size:11px}}
+          @media(max-width:430px) and (orientation:portrait){.final-story{min-height:180px}.final-story h1{font-size:36px;max-width:7ch}.final-mark{font-size:11px}.final-panel{padding-top:22px}#finalForm .copy{margin-bottom:20px}}
+          @media(min-width:1800px){.final-arrow{width:64px;height:64px;font-size:32px}}
+          @media print{#finalGate,#finalNav{display:none!important}.slide-viewport,.slide-viewport.final-active{position:relative!important;display:block!important;width:1920px!important;height:1080px!important;break-after:page}.slide-scale{position:static!important;transform:none!important}}
+          </style>
+          <div id="finalGate" aria-label="Acesso à apresentação">
+            <section class="final-story">
+              <div class="final-mark">Setor Madeiras · Londrina</div>
               <h1>Decisão com evidência.</h1>
-              <p>Apresentação executiva protegida, disponível no Windows, iPhone e Android.</p>
-              <div class="gate-qr">
-                <img alt="QR code para abrir no celular" src="https://api.qrserver.com/v1/create-qr-code/?size=520x520&ecc=H&data=https%3A%2F%2Findominho.github.io%2FSetor-Madeiras%2F">
-                <span>Abrir no celular</span>
-              </div>
+              <p>Apresentação executiva protegida, preparada para computador, televisão e celular.</p>
+              <div class="final-qr"><img alt="QR code do site" src="https://api.qrserver.com/v1/create-qr-code/?size=520x520&amp;ecc=H&amp;data=https%3A%2F%2Findominho.github.io%2FSetor-Madeiras%2F"><span>Abrir no celular</span></div>
             </section>
-            <section class="gate-panel">
-              <form id="accessForm" autocomplete="on">
+            <section class="final-panel">
+              <form id="finalForm" novalidate>
                 <div class="kicker">Acesso restrito</div>
                 <h2>Entrar na apresentação</h2>
-                <p class="copy">Use as credenciais autorizadas para abrir o conteúdo.</p>
-                <div class="field"><label for="accessUser">Usuário</label><div class="input-wrap"><input id="accessUser" inputmode="numeric" autocomplete="username" required autofocus></div></div>
-                <div class="field"><label for="accessPass">Senha</label><div class="input-wrap"><input id="accessPass" type="password" autocomplete="current-password" required><button id="accessToggle" type="button">Mostrar</button></div></div>
-                <button id="accessSubmit" type="submit">Acessar apresentação</button>
-                <div id="accessError" role="alert" aria-live="polite"></div>
+                <p class="copy">Apresentado por Natanael - Assessor de Vendas</p>
+                <div class="field"><label for="finalUser">Usuário</label><div class="input-wrap"><input id="finalUser" inputmode="numeric" autocomplete="username" required autofocus></div></div>
+                <div class="field"><label for="finalPass">Senha</label><div class="input-wrap"><input id="finalPass" type="password" autocomplete="current-password" required><button id="finalToggle" type="button" aria-label="Mostrar senha" title="Mostrar senha">◉</button></div></div>
+                <button id="finalSubmit" type="submit">Acessar apresentação</button>
+                <div id="finalError" role="alert" aria-live="polite"></div>
               </form>
             </section>
           </div>
-          '''
-
-          script=r'''
-          <script id="accessGateScript">
-          (() => {
-            const gate=document.getElementById('accessGate');
-            const form=document.getElementById('accessForm');
-            const user=document.getElementById('accessUser');
-            const pass=document.getElementById('accessPass');
-            const toggle=document.getElementById('accessToggle');
-            const error=document.getElementById('accessError');
-            document.body.classList.add('access-locked');
-            toggle.onclick=()=>{const show=pass.type==='password';pass.type=show?'text':'password';toggle.textContent=show?'Ocultar':'Mostrar';pass.focus()};
-            form.onsubmit=event=>{event.preventDefault();event.stopPropagation();if(user.value.trim()==='51067271'&&pass.value==='madeiras2026'){gate.remove();document.body.classList.remove('access-locked');document.body.tabIndex=-1;document.body.focus({preventScroll:true})}else{error.textContent='Usuário ou senha incorretos.';pass.focus();pass.select()}return false};
+          <div id="finalNav" aria-label="Navegação dos slides"><button id="finalPrev" class="final-arrow" type="button" aria-label="Slide anterior">‹</button><button id="finalNext" class="final-arrow" type="button" aria-label="Próximo slide">›</button><span id="finalCount"></span></div>
+          <script id="finalRepairScript">
+          (()=>{
+            'use strict';
+            const gate=document.getElementById('finalGate'),form=document.getElementById('finalForm'),user=document.getElementById('finalUser'),pass=document.getElementById('finalPass'),toggle=document.getElementById('finalToggle'),error=document.getElementById('finalError');
+            let unlocked=false,index=0,startX=0,startY=0;
+            const slides=()=>Array.from(document.querySelectorAll('.slide-viewport'));
+            function scale(){const vv=window.visualViewport,w=vv?vv.width:innerWidth,h=vv?vv.height:innerHeight,k=Math.min(w/1920,h/1080);document.documentElement.style.setProperty('--final-scale',String(k))}
+            function show(n){const all=slides();if(!all.length)return;index=Math.max(0,Math.min(n,all.length-1));all.forEach((el,i)=>{el.classList.toggle('final-active',i===index);el.setAttribute('aria-hidden',i===index?'false':'true')});const c=document.getElementById('finalCount');if(c)c.textContent=`${index+1} / ${all.length}`;const p=document.getElementById('finalPrev'),nx=document.getElementById('finalNext');if(p)p.disabled=index===0;if(nx)nx.disabled=index===all.length-1;history.replaceState(null,'',`#slide-${index+1}`);scale()}
+            function move(d){if(unlocked)show(index+d)}
+            toggle.addEventListener('click',()=>{const visible=pass.type==='text';pass.type=visible?'password':'text';toggle.textContent=visible?'◉':'●';toggle.setAttribute('aria-label',visible?'Mostrar senha':'Ocultar senha');pass.focus()});
+            form.addEventListener('submit',e=>{e.preventDefault();e.stopPropagation();if(user.value.trim()==='51067271'&&pass.value==='madeiras2026'){unlocked=true;gate.remove();document.body.classList.add('final-unlocked');show(0);document.body.focus({preventScroll:true})}else{error.textContent='Usuário ou senha incorretos.';pass.focus();pass.select()}});
+            window.addEventListener('keydown',e=>{if(!unlocked)return;if(['ArrowRight','ArrowDown','PageDown',' ','Enter'].includes(e.key)){e.preventDefault();e.stopImmediatePropagation();move(1)}else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();e.stopImmediatePropagation();move(-1)}else if(e.key==='Home'){e.preventDefault();e.stopImmediatePropagation();show(0)}else if(e.key==='End'){e.preventDefault();e.stopImmediatePropagation();show(slides().length-1)}},true);
+            document.getElementById('finalPrev').addEventListener('click',()=>move(-1));document.getElementById('finalNext').addEventListener('click',()=>move(1));
+            document.addEventListener('touchstart',e=>{if(!unlocked||e.touches.length!==1)return;startX=e.touches[0].clientX;startY=e.touches[0].clientY},{passive:true});
+            document.addEventListener('touchend',e=>{if(!unlocked||!e.changedTouches.length)return;const dx=e.changedTouches[0].clientX-startX,dy=e.changedTouches[0].clientY-startY;if(Math.abs(dx)>55&&Math.abs(dx)>Math.abs(dy)*1.25)move(dx<0?1:-1)},{passive:true});
+            addEventListener('resize',scale,{passive:true});addEventListener('orientationchange',()=>setTimeout(scale,120),{passive:true});if(window.visualViewport)visualViewport.addEventListener('resize',scale,{passive:true});
+            document.documentElement.classList.add('reveals-ready');scale();show(0);setTimeout(()=>user.focus(),80);
           })();
           </script>
+          <!-- reparo-final-fim -->
           '''
 
-          # Insere imediatamente depois da tag body real, nunca em comentários.
-          s,n=re.subn(r'(<body\b[^>]*>)',r'\1\n'+gate,s,count=1,flags=re.I)
-          assert n==1
-          s=s.replace('</body>',script+'\n</body>')
-          p.write_text(s,encoding='utf-8')
+          # O bloco entra logo após a tag body real. O script registra primeiro
+          # o controlador capturador e neutraliza os navegadores antigos.
+          s,n = re.subn(r'(<body\b[^>]*>)', r'\1\n'+block, s, count=1, flags=re.I)
+          assert n == 1
+          p.write_text(s, encoding='utf-8')
 
-      - name: Validar estrutura
+      - name: Validar reparo
         shell: python {0}
         run: |
           from pathlib import Path
-          from html.parser import HTMLParser
           s=Path('index.html').read_text(encoding='utf-8')
           body=s.lower().find('<body')
-          gate=s.find('<!-- login-qr-pages-v2 -->')
-          assert body >= 0 and gate > body
-          assert s.count('id="accessGate"') == 1
-          assert s.count('id="accessGateScript"') == 1
+          repair=s.find('<!-- reparo-final-inicio -->')
+          assert body >= 0 and repair > body
+          assert s.count('id="finalGate"') == 1
+          assert s.count('id="finalRepairScript"') == 1
+          assert s.count('class="slide-viewport"') == 15
           assert '51067271' in s and 'madeiras2026' in s
+          assert "stopImmediatePropagation()" in s
+          assert "Math.min(w/1920,h/1080)" in s
+          assert "touchstart" in s and "orientationchange" in s
           assert 'api.qrserver.com' in s
-          assert s.count("window.addEventListener('keydown',handle,true)") == 1
-          assert 'keyboard-pages-final' not in s
 
-      - name: Salvar correção
+      - name: Publicar reparo
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add index.html
-          git diff --cached --quiet || git commit -m "Corrige posição do login e QR [login-posicao-ok]"
+          git diff --cached --quiet || git commit -m "Repara login, páginas pares e responsividade [reparo-final-ok]"
           git push
