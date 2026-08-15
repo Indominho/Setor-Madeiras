@@ -25,15 +25,15 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Corrigir teclado e foco
-        shell: python
+        shell: python {0}
         run: |
           from pathlib import Path
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
-          marker = '<!-- keyboard-pages-v1 -->'
+          marker = '<!-- keyboard-pages-v2 -->'
           if marker not in s:
               patch = r'''
-          <!-- keyboard-pages-v1 -->
+          <!-- keyboard-pages-v2 -->
           <script>
           (() => {
             'use strict';
@@ -72,7 +72,11 @@ jobs:
             window.addEventListener('keydown', handler, true);
             document.addEventListener('keydown', handler, true);
             window.addEventListener('hashchange', read);
-            window.addEventListener('load', () => { read(); document.body.tabIndex = -1; document.body.focus({preventScroll:true}); });
+            window.addEventListener('load', () => {
+              read();
+              document.body.tabIndex = -1;
+              document.body.focus({preventScroll:true});
+            });
             read();
           })();
           </script>
