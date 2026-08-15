@@ -173,8 +173,9 @@ img, .image-container {
 
 /* ---------- Nav dots ----------
    Default: right-center (vertical stack on right edge).
-   Override with 
-<!-- login-qr-pages-v1 -->
+   Override with<body data-nav="bottom | top-right | hidden">
+
+<!-- login-qr-pages-v2 -->
 <div id="accessGate">
   <section class="gate-story">
     <div class="gate-mark">Setor Madeiras · Londrina</div>
@@ -197,8 +198,7 @@ img, .image-container {
     </form>
   </section>
 </div>
-
-<body data-nav="bottom | top-right | hidden">. */
+. */
 .nav-dots {
     position: fixed;
     right: clamp(0.6rem, 1.5vw, 1.4rem);
@@ -442,7 +442,8 @@ read();
 
 <!-- [navegacao-unica] -->
 
-<script>
+
+<script id="accessGateScript">
 (() => {
   const gate=document.getElementById('accessGate');
   const form=document.getElementById('accessForm');
@@ -451,8 +452,8 @@ read();
   const toggle=document.getElementById('accessToggle');
   const error=document.getElementById('accessError');
   document.body.classList.add('access-locked');
-  toggle.addEventListener('click',()=>{const show=pass.type==='password';pass.type=show?'text':'password';toggle.textContent=show?'Ocultar':'Mostrar';pass.focus()});
-  form.addEventListener('submit',event=>{event.preventDefault();event.stopPropagation();if(user.value.trim()==='51067271'&&pass.value==='madeiras2026'){gate.remove();document.body.classList.remove('access-locked');document.body.tabIndex=-1;document.body.focus({preventScroll:true})}else{error.textContent='Usuário ou senha incorretos.';pass.focus();pass.select()}},true);
+  toggle.onclick=()=>{const show=pass.type==='password';pass.type=show?'text':'password';toggle.textContent=show?'Ocultar':'Mostrar';pass.focus()};
+  form.onsubmit=event=>{event.preventDefault();event.stopPropagation();if(user.value.trim()==='51067271'&&pass.value==='madeiras2026'){gate.remove();document.body.classList.remove('access-locked');document.body.tabIndex=-1;document.body.focus({preventScroll:true})}else{error.textContent='Usuário ou senha incorretos.';pass.focus();pass.select()}return false};
 })();
 </script>
 
