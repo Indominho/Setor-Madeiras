@@ -383,4 +383,52 @@ document.addEventListener('keydown',handle,true);
 addEventListener('load',function(){read();try{document.body.focus({preventScroll:true})}catch(x){document.body.focus()}},false);
 document.addEventListener('pointerdown',function(){if(document.activeElement===document.body||!document.activeElement)document.body.focus()},false);
 read();
-})();</script><div class="keyboard-ready">Teclado: ← → · Espaço · F</div></body></html>
+})();</script><div class="keyboard-ready">Teclado: ← → · Espaço · F</div>
+<!-- keyboard-pages-final -->
+<script>
+(() => {
+  'use strict';
+  const total = 15;
+  let current = 1;
+  const read = () => {
+    const m = (location.hash || '').match(/(?:frame|slide)-(\d+)/);
+    current = m ? Math.max(1, Math.min(total, Number(m[1]) || 1)) : 1;
+  };
+  const go = n => {
+    current = Math.max(1, Math.min(total, n));
+    const frame = document.getElementById(`frame-${current}`);
+    const slide = document.getElementById(`slide-${current}`);
+    location.hash = frame ? `frame-${current}` : `slide-${current}`;
+    (frame || slide)?.focus?.({preventScroll:true});
+  };
+  const handler = event => {
+    const tag = event.target?.tagName || '';
+    if (/INPUT|TEXTAREA|SELECT/.test(tag)) return;
+    const key = event.key;
+    const code = event.keyCode || event.which || 0;
+    if (['ArrowRight','ArrowDown',' ','PageDown'].includes(key) || [39,40,32,34].includes(code)) {
+      event.preventDefault(); event.stopImmediatePropagation(); read(); go(current + 1);
+    } else if (['ArrowLeft','ArrowUp','PageUp'].includes(key) || [37,38,33].includes(code)) {
+      event.preventDefault(); event.stopImmediatePropagation(); read(); go(current - 1);
+    } else if (key === 'Home' || key === 'r' || key === 'R' || code === 36) {
+      event.preventDefault(); go(1);
+    } else if (key === 'End' || code === 35) {
+      event.preventDefault(); go(total);
+    } else if (key === 'f' || key === 'F' || code === 70) {
+      event.preventDefault();
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen?.();
+      else document.exitFullscreen?.();
+    }
+  };
+  window.addEventListener('keydown', handler, true);
+  document.addEventListener('keydown', handler, true);
+  window.addEventListener('hashchange', read);
+  window.addEventListener('load', () => {
+    read(); document.body.tabIndex = -1;
+    document.body.focus({preventScroll:true});
+  });
+  read();
+})();
+</script>
+
+</body></html>
