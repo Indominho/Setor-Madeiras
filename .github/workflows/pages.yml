@@ -1,4 +1,4 @@
-name: Publicar GitHub Pages
+name: Corrigir apresentação
 
 on:
   push:
@@ -6,34 +6,27 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: true
+  contents: write
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  corrigir:
+    if: ${{ !contains(github.event.head_commit.message, '[teclado-ok]') }}
     runs-on: ubuntu-latest
     steps:
       - name: Baixar repositório
         uses: actions/checkout@v4
 
-      - name: Corrigir teclado e foco
+      - name: Corrigir teclado e foco no index
         shell: python {0}
         run: |
           from pathlib import Path
           p = Path('index.html')
           s = p.read_text(encoding='utf-8')
-          marker = '<!-- keyboard-pages-v2 -->'
-          if marker not in s:
-              patch = r'''
-          <!-- keyboard-pages-v2 -->
+          marker = '<!-- keyboard-pages-final -->'
+          if marker in s:
+              raise SystemExit(0)
+          patch = r'''
+          <!-- keyboard-pages-final -->
           <script>
           (() => {
             'use strict';
@@ -73,27 +66,20 @@ jobs:
             document.addEventListener('keydown', handler, true);
             window.addEventListener('hashchange', read);
             window.addEventListener('load', () => {
-              read();
-              document.body.tabIndex = -1;
+              read(); document.body.tabIndex = -1;
               document.body.focus({preventScroll:true});
             });
             read();
           })();
           </script>
           '''
-              s = s.replace('</body>', patch + '\n</body>')
-              p.write_text(s, encoding='utf-8')
+          s = s.replace('</body>', patch + '\n</body>')
+          p.write_text(s, encoding='utf-8')
 
-      - name: Configurar Pages
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
-
-      - name: Enviar site
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: .
-
-      - name: Publicar
-        id: deployment
-        uses: actions/deploy-pages@v4
+      - name: Salvar correção
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git diff --cached --quiet || git commit -m "Corrige teclado da apresentação [teclado-ok]"
+          git push
